@@ -175,7 +175,13 @@
         <h1>Welcome Back</h1>
         <p>Registrar Student Information System</p>
         
-        <form action="#" method="POST">
+        <?php if(isset($_GET['error'])): ?>
+            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; padding: 10px; border-radius: 8px; margin-bottom: 1rem; color: #fca5a5; font-size: 0.85rem;">
+                Invalid username or password. Please try again.
+            </div>
+        <?php endif; ?>
+        
+        <form action="registrar/api/auth.php" method="POST">
             <div class="input-group">
                 <label for="username">Username / Student ID</label>
                 <input type="text" id="username" name="username" placeholder="Enter your ID or username" required autocomplete="username">

@@ -1,3 +1,30 @@
+<?php
+session_start();
+if (!isset($_SESSION['admin_id'])) { header('Location: ../index.php'); exit(); }
+include 'api/data_loader.php';
+
+// Fetch Dynamic Stats
+$q_active = $conn->query("SELECT COUNT(*) AS c FROM personal_info WHERE status='Active'");
+$active_students = $q_active ? $q_active->fetch_assoc()['c'] : 0;
+
+$q_docs = $conn->query("SELECT COUNT(*) AS c FROM document_requests WHERE status IN ('Pending', 'Processing')");
+$pending_docs = $q_docs ? $q_docs->fetch_assoc()['c'] : 0;
+
+$q_id = $conn->query("SELECT COUNT(*) AS c FROM student_ids WHERE status IN ('Pending', 'Partial')");
+$id_queue = $q_id ? $q_id->fetch_assoc()['c'] : 0;
+
+$q_health = $conn->query("SELECT COUNT(*) AS c FROM health_logs WHERE DATE(log_date) = CURDATE()");
+$health_today = $q_health ? $q_health->fetch_assoc()['c'] : 0;
+
+$q_gender = $conn->query("SELECT gender, COUNT(*) AS c FROM personal_info GROUP BY gender");
+$males = 0; $females = 0;
+if ($q_gender) {
+    while($row = $q_gender->fetch_assoc()) {
+        if ($row['gender'] == 'Male') $males = $row['c'];
+        if ($row['gender'] == 'Female') $females = $row['c'];
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,21 +72,7 @@
         }
 
         /* Sidebar Styles */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--surface-color);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-right: 1px solid rgba(255, 255, 255, 0.5);
-            color: var(--text-main);
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-            padding-top: 2rem;
-            z-index: 100;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .sidebar { width: var(--sidebar-width); background: #17388A; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-right: none; color: white; position: fixed; height: 100vh; left: 0; top: 0; padding-top: 2rem; z-index: 100; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
         .sidebar-brand {
             padding: 0 2rem 2rem 2rem;
@@ -77,21 +90,9 @@
             border-radius: 12px;
         }
 
-        .sidebar-brand h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-            color: var(--text-main);
-        }
+        .sidebar-brand h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; color: white; }
 
-        .sidebar-brand h2 span {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-weight: 500;
-            margin-top: 4px;
-        }
+        .sidebar-brand h2 span { display: block; font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); font-weight: 500; margin-top: 4px; }
 
         .nav-list {
             list-style: none;
@@ -102,46 +103,17 @@
             margin-bottom: 0.4rem;
         }
 
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.2rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            border-radius: var(--radius-md);
-            transition: all 0.3s ease;
-            gap: 14px;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
+        .nav-link { display: flex; align-items: center; height: 50px; padding: 1rem 1.4rem; color: rgba(255, 255, 255, 0.7); text-decoration: none; border-radius: var(--radius-md); transition: all 0.3s; gap: 14px; font-weight: 500; }
 
-        .nav-link i {
-            width: 20px;
-            text-align: center;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-            color: #94a3b8;
-        }
+        .nav-link i { width: 22px; text-align: center; font-size: 1.25rem; color: rgba(255, 255, 255, 0.7); }
 
-        .nav-link:hover {
-            background-color: rgba(99, 102, 241, 0.05);
-            color: var(--primary-color);
-        }
-
-        .nav-link:hover i {
-            color: var(--primary-color);
-            transform: scale(1.1);
-        }
+        .nav-link:hover { background: rgba(255, 255, 255, 0.1); color: white; }
 
         .nav-link.active {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
+            background: var(--primary-color); color: white; box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
         }
 
-        .nav-link.active i {
-            color: white;
-        }
+        .nav-link.active i { color: white; }
 
         /* Main Content Styles */
         .main-content {
@@ -167,18 +139,6 @@
             border-bottom: 1px solid rgba(255,255,255,0.3);
         }
 
-        .search-bar {
-            background: white;
-            padding: 10px 20px;
-            border-radius: 99px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-            display: flex;
-            align-items: center;
-            color: var(--text-muted);
-            width: 300px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
         .user-profile {
             display: flex;
             align-items: center;
@@ -187,13 +147,8 @@
             padding: 8px 16px;
             background: white;
             border-radius: 99px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-            transition: all 0.3s;
             border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .user-profile:hover {
-            box-shadow: var(--shadow-hover);
+            transition: all 0.3s;
         }
 
         .avatar {
@@ -206,16 +161,6 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-        }
-
-        .user-info h4 {
-            font-size: 0.9rem;
-            font-weight: 700;
-        }
-        
-        .user-info p {
-            font-size: 0.75rem;
-            color: var(--text-muted);
         }
 
         /* Dashboard Body */
@@ -231,8 +176,7 @@
 
         .page-title h1 {
             font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: -1px;
+            font-weight: 800; letter-spacing: -1.5px;
         }
 
         .page-title p {
@@ -262,12 +206,6 @@
             border: 1px solid rgba(255,255,255,0.8);
         }
 
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-hover);
-            border-color: white;
-        }
-
         .stat-icon {
             width: 60px;
             height: 60px;
@@ -283,18 +221,8 @@
         .icon-orange { background: #fff7ed; color: #f97316; }
         .icon-purple { background: #f5f3ff; color: #8b5cf6; }
 
-        .stat-details h3 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--text-main);
-            margin-bottom: 4px;
-        }
-
-        .stat-details p {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
+        .stat-details h3 { font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+        .stat-details p { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
 
         /* Modules Grid */
         .section-header {
@@ -354,405 +282,200 @@
             color: white;
             border-radius: 50%;
             transform: rotate(5deg) scale(1.1);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
 
-        .module-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.6rem;
-            letter-spacing: -0.5px;
-        }
+        .module-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.6rem; letter-spacing: -0.5px; }
+        .module-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
 
-        .module-desc {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
+        /* Dark Mode */
+        :root[data-theme="dark"] { --bg-color: #0f172a; --surface-color: rgba(30, 41, 59, 0.85); --text-main: #f8fafc; --text-muted: #94a3b8; }
+        :root[data-theme="dark"] body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        :root[data-theme="dark"] .sidebar { background: #17388A; border-right: 1px solid rgba(255, 255, 255, 0.05); }
+        :root[data-theme="dark"] .module-card, :root[data-theme="dark"] .stat-card, :root[data-theme="dark"] .user-profile { background: #1e293b; border-color: rgba(255,255,255,0.05); color: var(--text-main); }
+        :root[data-theme="dark"] .module-icon, :root[data-theme="dark"] .stat-icon { background: rgba(15, 23, 42, 0.6); }
 
-        .module-arrow {
-            position: absolute;
-            bottom: 2rem;
-            right: 2rem;
-            color: #cbd5e1;
-            font-size: 1.3rem;
-            transition: all 0.4s ease;
-            opacity: 0;
-            transform: translateX(-15px);
-        }
-
-        .module-card:hover .module-arrow {
-            opacity: 1;
-            transform: translateX(0);
-            color: var(--primary-color);
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            :root {
-                --sidebar-width: 90px;
-            }
-            .sidebar-brand h2 {
-                display: none;
-            }
-            .nav-link span {
-                display: none;
-            }
-            .nav-link {
-                justify-content: center;
-                padding: 1.2rem;
-            }
-            .nav-link i {
-                margin: 0;
-                font-size: 1.4rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            .dashboard-body {
-                padding: 1.5rem;
-            }
-            .header {
-                padding: 0 1.5rem;
-            }
-        }
+        .theme-toggle { background: white; border: 1px solid rgba(0,0,0,0.05); width: 44px; height: 44px; border-radius: 50%; cursor: pointer; margin-right: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        :root[data-theme="dark"] .theme-toggle { background: #1e293b; color: white; border-color: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
-
-    <!-- Sidebar Navigation -->
     <aside class="sidebar">
         <div class="sidebar-brand">
             <i class="fa-solid fa-graduation-cap"></i>
             <h2>Registrar SIS<span>Management Portal</span></h2>
         </div>
-        
         <ul class="nav-list">
-            <li class="nav-item">
-                <a href="dashboard.php" class="nav-link active">
-                    <i class="fa-solid fa-table-cells-large"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="Personal_info.php" class="nav-link">
-                    <i class="fa-solid fa-users"></i>
-                    <span>Personal Info</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="Guardian&Emergency_Contact.php" class="nav-link">
-                    <i class="fa-solid fa-hands-holding-child"></i>
-                    <span>Guardian & Contact</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="Academic_history.php" class="nav-link">
-                    <i class="fa-solid fa-book-open"></i>
-                    <span>Academic History</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="Health_Record_log.php" class="nav-link">
-                    <i class="fa-solid fa-truck-medical"></i>
-                    <span>Health Record Log</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="id_generator.php" class="nav-link">
-                    <i class="fa-solid fa-id-card"></i>
-                    <span>ID Generation</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="rfid.php" class="nav-link">
-                    <i class="fa-solid fa-wifi"></i>
-                    <span>RFID Scanner</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="docu.php" class="nav-link">
-                    <i class="fa-solid fa-file-invoice"></i>
-                    <span>Document Requests</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="tracker.php" class="nav-link">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Status Tracker</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="storage.php" class="nav-link">
-                    <i class="fa-solid fa-folder-tree"></i>
-                    <span>Digital File Storage</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="masterlist.php" class="nav-link">
-                    <i class="fa-solid fa-list-ol"></i>
-                    <span>Student Masterlist</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="../index.php" class="nav-link" style="margin-top: 2rem; color: #fca5a5;">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Logout</span>
-                </a>
-            </li>
+            <li class="nav-item"><a href="dashboard.php" class="nav-link active"><i class="fa-solid fa-table-cells-large"></i><span>Dashboard</span></a></li>
+            <li class="nav-item"><a href="Personal_info.php" class="nav-link"><i class="fa-solid fa-users"></i><span>Personal Info</span></a></li>
+            <li class="nav-item"><a href="Guardian&Emergency_Contact.php" class="nav-link"><i class="fa-solid fa-hands-holding-child"></i><span>Guardian & Contact</span></a></li>
+            <li class="nav-item"><a href="Academic_history.php" class="nav-link"><i class="fa-solid fa-book-open"></i><span>Academic History</span></a></li>
+            <li class="nav-item"><a href="Health_Record_log.php" class="nav-link"><i class="fa-solid fa-truck-medical"></i><span>Health Record Log</span></a></li>
+            <li class="nav-item"><a href="id_generator.php" class="nav-link"><i class="fa-solid fa-id-card"></i><span>ID Processing</span></a></li>
+            <li class="nav-item"><a href="rfid.php" class="nav-link"><i class="fa-solid fa-wifi"></i><span>RFID / QR Module</span></a></li>
+            <li class="nav-item"><a href="docu.php" class="nav-link"><i class="fa-solid fa-file-invoice"></i><span>Document Requests</span></a></li>
+            <li class="nav-item"><a href="tracker.php" class="nav-link"><i class="fa-solid fa-chart-line"></i><span>Status Tracker</span></a></li>
+            <li class="nav-item"><a href="storage.php" class="nav-link"><i class="fa-solid fa-folder-tree"></i><span>Digital File Storage</span></a></li>
+            <li class="nav-item"><a href="masterlist.php" class="nav-link"><i class="fa-solid fa-list-ol"></i><span>Student Masterlist</span></a></li>
+            <li class="nav-item"><a href="api/logout.php" class="nav-link" style="margin-top: 2rem; color: #fca5a5;"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Top Header -->
         <header class="header">
-            <div class="search-bar" style="color: var(--text-muted);">
-                <i class="fa-solid fa-magnifying-glass"></i> <span style="margin-left: 10px; font-size: 0.9rem;">Search records...</span>
-            </div>
-            
-            <div class="user-profile">
-                <div class="user-info" style="text-align: right;">
-                    <h4>Admin User</h4>
-                    <p>Head Registrar</p>
-                </div>
-                <div class="avatar">
-                    A
+            <div style="font-weight: 700; color: var(--text-muted); font-size: 0.9rem;"><i class="fa-solid fa-calendar-day"></i> <?php echo date('F d, Y'); ?> | <span id="liveTime" style="font-weight: 600;"></span></div>
+            <div style="display: flex; align-items: center;">
+                <div class="theme-toggle" id="themeToggle"><i class="fa-solid fa-moon"></i></div>
+                <div class="user-profile">
+                    <div class="user-info" style="text-align: right;"><h4>Registrar</h4><p><?php echo htmlspecialchars($_SESSION["admin_user"]); ?></p></div>
+                    <div class="avatar"><?php echo strtoupper(substr($_SESSION["admin_user"], 0, 1)); ?></div>
                 </div>
             </div>
         </header>
 
-        <!-- Dashboard Body -->
         <div class="dashboard-body">
-            
             <div class="page-title">
                 <h1>Overview Dashboard</h1>
-                <p>Welcome back! Here's what's happening in the system today.</p>
+                <p>Welcome back! Comprehensive monitoring for your school information system.</p>
             </div>
 
-            <!-- Quick Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon icon-blue">
-                        <i class="fa-solid fa-user-graduate"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>1,248</h3>
-                        <p>Total Active Students</p>
-                    </div>
+                    <div class="stat-icon icon-blue"><i class="fa-solid fa-user-graduate"></i></div>
+                    <div class="stat-details"><h3><?php echo number_format($active_students); ?></h3><p>Active Students</p></div>
                 </div>
-                
                 <div class="stat-card">
-                    <div class="stat-icon icon-green">
-                        <i class="fa-solid fa-file-circle-check"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>42</h3>
-                        <p>Pending Document Requests</p>
-                    </div>
+                    <div class="stat-icon icon-green"><i class="fa-solid fa-file-circle-check"></i></div>
+                    <div class="stat-details"><h3><?php echo number_format($pending_docs); ?></h3><p>Pending Documents</p></div>
                 </div>
-
                 <div class="stat-card">
-                    <div class="stat-icon icon-orange">
-                        <i class="fa-solid fa-id-badge"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>15</h3>
-                        <p>Pending ID Generates</p>
-                    </div>
+                    <div class="stat-icon icon-orange"><i class="fa-solid fa-id-badge"></i></div>
+                    <div class="stat-details"><h3><?php echo number_format($id_queue); ?></h3><p>ID Printing Queue</p></div>
                 </div>
-
                 <div class="stat-card">
-                    <div class="stat-icon icon-purple">
-                        <i class="fa-solid fa-heart-pulse"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>5</h3>
-                        <p>Health Logs Today</p>
-                    </div>
+                    <div class="stat-icon icon-purple"><i class="fa-solid fa-heart-pulse"></i></div>
+                    <div class="stat-details"><h3><?php echo number_format($health_today); ?></h3><p>Health Logs Today</p></div>
                 </div>
             </div>
 
-            <!-- Analytics Section -->
-            <h2 class="section-header">
-                <i class="fa-solid fa-chart-pie"></i> Data Analytics
-            </h2>
-            <div class="analytics-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.8rem; margin-bottom: 3rem;">
-                <!-- Line Chart -->
-                <div class="stat-card" style="flex-direction: column; align-items: flex-start;">
-                    <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;"><i class="fa-solid fa-graduation-cap"></i> Student Enrollment Trends</h3>
-                    <div style="width: 100%; height: 300px;">
-                        <canvas id="enrollmentChart"></canvas>
-                    </div>
-                </div>
-                <!-- Doughnut Chart -->
-                <div class="stat-card" style="flex-direction: column; align-items: flex-start;">
-                    <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;"><i class="fa-solid fa-venus-mars"></i> Gender Distribution</h3>
-                    <div style="width: 100%; height: 300px;">
-                        <canvas id="genderChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modules Section -->
-            <h2 class="section-header">
-                <i class="fa-solid fa-cubes"></i> System Modules
-            </h2>
-
+            <h2 class="section-header"><i class="fa-solid fa-cubes"></i> System Modules</h2>
             <div class="modules-grid">
-                
-                <!-- Personal Info -->
                 <a href="Personal_info.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-address-card"></i>
-                    </div>
+                    <div class="module-icon"><i class="fa-solid fa-address-card"></i></div>
                     <h3 class="module-title">Personal Info</h3>
-                    <p class="module-desc">Manage core student details, profiles, and demographic information.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <p class="module-desc">Manage core student details and demographics.</p>
                 </a>
-
-                <!-- Guardian & Emergency Contact -->
                 <a href="Guardian&Emergency_Contact.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-users-viewfinder"></i>
-                    </div>
-                    <h3 class="module-title">Guardian & Emergency Contact</h3>
-                    <p class="module-desc">Maintain records of parents, guardians, and contact persons for emergencies.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <div class="module-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+                    <h3 class="module-title">Guardian & Contact</h3>
+                    <p class="module-desc">Maintain emergency contact and parent records.</p>
                 </a>
-
-                <!-- Academic History -->
                 <a href="Academic_history.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-award"></i>
-                    </div>
+                    <div class="module-icon"><i class="fa-solid fa-award"></i></div>
                     <h3 class="module-title">Academic History</h3>
-                    <p class="module-desc">Track previous schools attended, grades, scholastic records, and achievements.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <p class="module-desc">Track scholastic records and grades.</p>
                 </a>
-
-                <!-- Health Record Log -->
                 <a href="Health_Record_log.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-notes-medical"></i>
-                    </div>
+                    <div class="module-icon"><i class="fa-solid fa-notes-medical"></i></div>
                     <h3 class="module-title">Health Record Log</h3>
-                    <p class="module-desc">Monitor student medical conditions, clinic visits, and health interventions.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <p class="module-desc">Monitor student medical conditions and clinic visits.</p>
                 </a>
-
-                <!-- Document Requests -->
                 <a href="docu.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-file-signature"></i>
-                    </div>
+                    <div class="module-icon"><i class="fa-solid fa-file-signature"></i></div>
                     <h3 class="module-title">Document Requests</h3>
-                    <p class="module-desc">Process requests for Form 137, Cert. of Good Moral Character, and transcripts.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <p class="module-desc">Process official certificates and transcript requests.</p>
                 </a>
-
-                <!-- ID Generation / RFID -->
                 <a href="id_generator.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-qrcode"></i>
-                    </div>
-                    <h3 class="module-title">ID & RFID</h3>
-                    <p class="module-desc">Generate student IDs, QR/RFID systems, and manage ID printing.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <div class="module-icon"><i class="fa-solid fa-id-card"></i></div>
+                    <h3 class="module-title">ID Processing</h3>
+                    <p class="module-desc">Manage physical ID printing and queue.</p>
                 </a>
-
-                <!-- Status Tracker -->
+                <a href="rfid.php" class="module-card">
+                    <div class="module-icon"><i class="fa-solid fa-wifi"></i></div>
+                    <h3 class="module-title">RFID / QR Module</h3>
+                    <p class="module-desc">Assign and link digital identities to students.</p>
+                </a>
                 <a href="tracker.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-bars-progress"></i>
-                    </div>
-                    <h3 class="module-title">Student Status Tracker</h3>
-                    <p class="module-desc">Track enrollment status, promotions, drop-outs, and transferees.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <div class="module-icon"><i class="fa-solid fa-bars-progress"></i></div>
+                    <h3 class="module-title">Status Tracker</h3>
+                    <p class="module-desc">Track enrollment status and student transitions.</p>
                 </a>
-
-                <!-- Digital File Storage -->
                 <a href="storage.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-folder-tree"></i>
-                    </div>
-                    <h3 class="module-title">Digital File Storage</h3>
-                    <p class="module-desc">Securely store and retrieve digital copies of submitted student requirements.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <div class="module-icon"><i class="fa-solid fa-folder-tree"></i></div>
+                    <h3 class="module-title">Digital Storage</h3>
+                    <p class="module-desc">Archive digital copies of submitted requirements.</p>
                 </a>
-
-                <!-- Masterlist Generator -->
                 <a href="masterlist.php" class="module-card">
-                    <div class="module-icon">
-                        <i class="fa-solid fa-list-ol"></i>
-                    </div>
+                    <div class="module-icon"><i class="fa-solid fa-list-ol"></i></div>
                     <h3 class="module-title">Masterlist Generator</h3>
-                    <p class="module-desc">Generate and export official class masterlists and registrar reports.</p>
-                    <i class="fa-solid fa-arrow-right module-arrow"></i>
+                    <p class="module-desc">Export official class lists and reporting.</p>
                 </a>
-
             </div>
+            
+            <div class="analytics-row" style="margin-top: 3rem; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <div class="stat-card" style="flex-direction: column; align-items: flex-start;">
+                    <h3 style="margin-bottom: 2rem; font-size: 1.1rem;"><i class="fa-solid fa-chart-line"></i> Enrollment Trends</h3>
+                    <div style="width: 100%; height: 300px;"><canvas id="enrollmentChart"></canvas></div>
+                </div>
+                <div class="stat-card" style="flex-direction: column; align-items: flex-start;">
+                    <h3 style="margin-bottom: 2rem; font-size: 1.1rem;"><i class="fa-solid fa-chart-pie"></i> Gender Split</h3>
+                    <div style="width: 100%; height: 300px;"><canvas id="genderChart"></canvas></div>
+                </div>
+            </div>
+
         </div>
     </main>
 
     <script>
-        // Enrollment Line Chart
         const ctxEnrollment = document.getElementById('enrollmentChart').getContext('2d');
         new Chart(ctxEnrollment, {
             type: 'line',
             data: {
                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
                 datasets: [{
-                    label: 'New Enrollments',
-                    data: [150, 180, 210, 190, 250, 290],
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4
+                    label: 'Enrollments', data: [0, 0, 0, 0, 0, 0],
+                    borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', borderWidth: 3, fill: true, tension: 0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-                    x: { grid: { display: false } }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
-        // Gender Doughnut Chart
         const ctxGender = document.getElementById('genderChart').getContext('2d');
         new Chart(ctxGender, {
             type: 'doughnut',
             data: {
-                labels: ['Male', 'Female', 'Other'],
-                datasets: [{
-                    data: [55, 42, 3],
-                    backgroundColor: ['#3b82f6', '#ec4899', '#10b981'],
-                    borderWidth: 0
-                }]
+                labels: ['Male', 'Female'], datasets: [{ data: [<?php echo $males; ?>, <?php echo $females; ?>], backgroundColor: ['#3b82f6', '#ec4899'], borderWidth: 0 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom' } } }
         });
+
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', target);
+            localStorage.setItem('theme', target);
+            themeToggle.querySelector('i').className = target === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        });
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.querySelector('i').className = 'fa-solid fa-sun';
+        }
+    </script>
+<script>
+        function updateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+            let ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            document.getElementById('liveTime').innerText = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
     </script>
 </body>
 </html>
