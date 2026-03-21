@@ -1,6 +1,9 @@
 <?php
 session_start();
-if (!isset($_SESSION['admin_id'])) { header('Location: ../index.php'); exit(); }
+if (!isset($_SESSION['admin_id'])) {
+    header('Location: ../index.php');
+    exit();
+}
 include 'api/data_loader.php';
 
 // Fetch Dynamic Stats
@@ -17,11 +20,14 @@ $q_health = $conn->query("SELECT COUNT(*) AS c FROM health_logs WHERE DATE(log_d
 $health_today = $q_health ? $q_health->fetch_assoc()['c'] : 0;
 
 $q_gender = $conn->query("SELECT gender, COUNT(*) AS c FROM personal_info GROUP BY gender");
-$males = 0; $females = 0;
+$males = 0;
+$females = 0;
 if ($q_gender) {
-    while($row = $q_gender->fetch_assoc()) {
-        if ($row['gender'] == 'Male') $males = $row['c'];
-        if ($row['gender'] == 'Female') $females = $row['c'];
+    while ($row = $q_gender->fetch_assoc()) {
+        if ($row['gender'] == 'Male')
+            $males = $row['c'];
+        if ($row['gender'] == 'Female')
+            $females = $row['c'];
     }
 }
 ?>

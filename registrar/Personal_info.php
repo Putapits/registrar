@@ -1,4 +1,9 @@
-<?php session_start(); if (!isset($_SESSION['admin_id'])) { header('Location: ../index.php'); exit(); } include 'api/data_loader.php'; ?>
+<?php session_start();
+if (!isset($_SESSION['admin_id'])) {
+    header('Location: ../index.php');
+    exit();
+}
+include 'api/data_loader.php'; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -277,8 +282,9 @@
                         <tbody>
                             <?php if (empty($mock_info)): ?>
                             <tr><td colspan="3" style="text-align: center; padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-folder-open" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>No student records found.</td></tr>
-                            <?php else: ?>
-                            <?php foreach($mock_info as $row): ?>
+                            <?php
+else: ?>
+                            <?php foreach ($mock_info as $row): ?>
                             <tr>
                                 <td><span style="font-weight: 700; color: var(--primary-dark);"><?php echo $row["student_id"]; ?></span></td>
                                 <td><?php echo $row["student_name"]; ?></td>
@@ -288,8 +294,10 @@
                                     </button>
                                 </td>
                             </tr>
-                            <?php endforeach; ?>
-                            <?php endif; ?>
+                            <?php
+    endforeach; ?>
+                            <?php
+endif; ?>
                         </tbody>
                     </table>
                 </div>

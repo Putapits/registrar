@@ -1,4 +1,9 @@
-<?php session_start(); if (!isset($_SESSION['admin_id'])) { header('Location: ../index.php'); exit(); } include 'api/data_loader.php'; ?>
+<?php session_start();
+if (!isset($_SESSION['admin_id'])) {
+    header('Location: ../index.php');
+    exit();
+}
+include 'api/data_loader.php'; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -187,8 +192,9 @@
                         <tbody>
                             <?php if (empty($mock_academic)): ?>
                             <tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-folder-open" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>No academic records found.</td></tr>
-                            <?php else: ?>
-                            <?php foreach($mock_academic as $row): ?>
+                            <?php
+else: ?>
+                            <?php foreach ($mock_academic as $row): ?>
                             <tr>
                                 <td style="font-weight: 700; color: var(--primary-dark);"><?php echo $row["student_id"]; ?></td>
                                 <td><?php echo $row["student_name"] ?? 'Unknown'; ?></td>
@@ -202,8 +208,10 @@
                                     </button>
                                 </td>
                             </tr>
-                            <?php endforeach; ?>
-                            <?php endif; ?>
+                            <?php
+    endforeach; ?>
+                            <?php
+endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -231,9 +239,10 @@
                         <label>Select Student</label>
                         <select name="student_id" required>
                             <option value="">Choose Student...</option>
-                            <?php foreach($mock_info as $student): ?>
+                            <?php foreach ($mock_info as $student): ?>
                             <option value="<?php echo $student['student_id']; ?>"><?php echo $student['student_id'] . " — " . $student['student_name']; ?></option>
-                            <?php endforeach; ?>
+                            <?php
+endforeach; ?>
                         </select>
                         <small>Pick the student whose academic record you are encoding.</small>
                     </div>

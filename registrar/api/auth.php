@@ -30,6 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
+    // 1. Check Admin Table
     $stmt = $conn->prepare("SELECT id, username, password, full_name FROM admins WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -37,17 +38,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($user = $result->fetch_assoc()) {
         if (password_verify($password, $user['password'])) {
-            // Success! Set session
             $_SESSION['admin_id'] = $user['id'];
-            $_SESSION['admin_user'] = $user['username'];
             $_SESSION['admin_user'] = $user['full_name'];
-            
             header("Location: ../dashboard.php");
             exit();
         }
     }
+
+    // 2. Check Student Accounts Table
+    $stmt = $conn->prepare("SELECT s.id, s.username, s.password, s.student_id, s.email, p.student_name, p.status 
+                             FROM student_accounts s 
+                             LEFT JOIN personal_info p ON s.student_id = p.student_id 
+                             WHERE s.username = ? OR s.email = ?");
+    $stmt->bind_param("ss", $username, $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($student = $result->fetch_assoc()) {
+        if (password_verify($password, $student['password'])) {
+            $_SESSION['student_db_id'] = $student['id'];
+            $_SESSION['student_id'] = $student['student_id'];
+            $_SESSION['student_name'] = $student['student_name'] ?? $student['username'];
+            $_SESSION['student_status'] = $student['status'] ?? 'Pending Link';
+            header("Location: ../../student/dashboard.php");
+            exit();
+        }
+    }
     
-    // Redirect back with error
     header("Location: ../../index.php?error=invalid_credentials");
     exit();
 }

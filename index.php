@@ -172,8 +172,8 @@
 <body>
     <div class="overlay"></div>
     <div class="login-container">
-        <h1>Welcome Back</h1>
-        <p>Registrar Student Information System</p>
+        <h1>Welcome</h1>
+        <p>Student Information System</p>
         
         <?php if(isset($_GET['error'])): ?>
             <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; padding: 10px; border-radius: 8px; margin-bottom: 1rem; color: #fca5a5; font-size: 0.85rem;">
@@ -193,6 +193,7 @@
             </div>
             
             <button type="submit" class="btn-submit">Sign In</button>
+            <a href="register.php" style="display: block; margin-top: 1rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.3s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'">Create a New Account</a>
         </form>
         
         <div class="footer-links">
