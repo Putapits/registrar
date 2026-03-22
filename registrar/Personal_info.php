@@ -405,9 +405,65 @@ endif; ?>
             </div>
 
             <div class="success-note"><i class="fa-solid fa-circle-info" style="margin-right:5px; color:#6366f1;"></i>Note this ID — it will be required for all subsequent modules.</div>
-            <button class="btn-modal" style="width:100%;" onclick="closeModal('successModal')">
+            <button class="btn-modal" style="width:100%; height:55px; font-size:1rem; border-radius:18px;" onclick="proceedToAccount()">
                 <i class="fa-solid fa-arrow-right" style="margin-right:8px;"></i>Proceed to Next Step
             </button>
+        </div>
+    </div>
+
+    <!-- Modal: Step 2 - Create Account -->
+    <div class="modal-overlay" id="accountModal">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <div>
+                    <span class="section-tag" style="background:#fef3c7; color:#d97706;">Step 2</span>
+                    <h2>Create Student Account</h2>
+                </div>
+                <button class="btn-ghost" style="padding: 10px; border-radius: 50%;" onclick="closeModal('accountModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:16px; padding:1.2rem; margin-bottom:2rem; display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:10px; background:#dbeafe; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                    <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Registration ID</div>
+                    <div style="font-weight:800; color:#17388A; font-size:1.1rem;" id="acc_student_id_display">—</div>
+                </div>
+            </div>
+
+            <form action="api/add_record.php" method="POST">
+                <input type="hidden" name="action" value="create_account">
+                <input type="hidden" name="student_id" id="acc_student_id_input">
+                
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label>Assigned Username</label>
+                    <div style="position:relative;">
+                        <i class="fa-solid fa-user" style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+                        <input type="text" name="username" id="suggested_username" placeholder="e.g. john_doe_2026" required
+                               style="padding-left:2.8rem; width:100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label>Assigned Password</label>
+                    <div style="position:relative;">
+                        <i class="fa-solid fa-key" style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+                        <input type="password" name="password" id="student_pass" placeholder="Enter secure password" required
+                               style="padding-left:2.8rem; width:100%;">
+                        <button type="button" onclick="const p=document.getElementById('student_pass'); p.type = p.type==='password'?'text':'password';"
+                                style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top:0; padding-top:0; border:none;">
+                    <button type="submit" class="btn-modal" style="width:100%; height:55px; border-radius:18px;">
+                        <i class="fa-solid fa-user-check" style="margin-right:8px;"></i>Finalize Account & Access
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -470,11 +526,32 @@ endif; ?>
                 document.getElementById('generatedStudentID').value = id;
                 document.getElementById('systemMsgID').textContent = id;
                 document.getElementById('successModal').classList.add('active');
-                // Clean URL without reloading
-                const cleanUrl = window.location.pathname;
-                window.history.replaceState({}, '', cleanUrl);
             }
+            if (params.has('account_created')) {
+                alert('Student account successfully created! They can now log in to the student portal.');
+            }
+            // Clean URL without reloading
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, '', cleanUrl);
         })();
+
+        let current_new_id = "";
+
+        function proceedToAccount() {
+            const id = document.getElementById('generatedStudentID').value;
+            current_new_id = id;
+            
+            // Set values in account modal
+            document.getElementById('acc_student_id_display').innerText = id;
+            document.getElementById('acc_student_id_input').value = id;
+            
+            // Suggest a username based on ID (simplified)
+            document.getElementById('suggested_username').value = "student_" + id.replace('-', '');
+            
+            // Switch modals
+            closeModal('successModal');
+            document.getElementById('accountModal').classList.add('active');
+        }
 
         function viewDetails(id) {
             const student = students.find(s => s.student_id === id);

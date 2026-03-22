@@ -176,6 +176,9 @@
                                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
                                     <button class="btn-action" onclick="alert('Viewing: <?php echo $row['filename']; ?>')"><i class="fa-solid fa-eye"></i> View</button>
                                     <button class="btn-action" onclick="alert('Downloading: <?php echo $row['filename']; ?>')"><i class="fa-solid fa-download"></i></button>
+                                    <button class="btn-action" style="background: rgba(239, 68, 68, 0.08); color: #ef4444;" onclick="deleteDocument(<?php echo $row['file_id']; ?>)">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -189,6 +192,26 @@
         </div>
     </main>
 
+    <script>
+        function deleteDocument(id) {
+            if (confirm("Are you sure you want to permanently delete this file? This action cannot be undone.")) {
+                fetch('api/delete_record.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=delete_storage&file_id=${id}`
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+    </script>
+
     <!-- Modal: Upload File -->
     <div class="modal-overlay" id="uploadModal">
         <div class="modal-card">
@@ -196,7 +219,7 @@
                 <h2>Upload Student File</h2>
                 <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form action="api/add_record.php" method="POST" id="uploadForm">
+            <form action="api/add_record.php" method="POST" id="uploadForm" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="add_storage">
                 <input type="hidden" name="upload_date" value="<?php echo date('Y-m-d'); ?>">
                 

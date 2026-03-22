@@ -144,8 +144,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
             break;
 
         case 'add_storage':
+            $student_id = $_POST['student_id'];
+            $file_type = $_POST['file_type'];
+            $upload_date = $_POST['upload_date'];
+            
+            // Handle Actual File Upload
+            $filename = $_POST['filename']; // Fallback
+            $size = $_POST['size']; // Fallback
+            
+            if (isset($_FILES['dummy_file']) && $_FILES['dummy_file']['error'] == 0) {
+                $filename = basename($_FILES['dummy_file']['name']);
+                $size = number_format($_FILES['dummy_file']['size'] / 1048576, 2) . " MB";
+                $target_dir = "../uploads/";
+                if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+                move_uploaded_file($_FILES['dummy_file']['tmp_name'], $target_dir . $filename);
+            }
+
             $stmt = $conn->prepare("INSERT INTO digital_storage (student_id, filename, file_type, upload_date, size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssss", $_POST['student_id'], $_POST['filename'], $_POST['file_type'], $_POST['upload_date'], $_POST['size'], $_SESSION['admin_name']);
+            $stmt->bind_param("ssssss", $student_id, $filename, $file_type, $upload_date, $size, $_SESSION['admin_user']);
             break;
 
         case 'add_doc_request':
@@ -157,6 +173,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
             $status = $_POST['status'];
             $stmt = $conn->prepare("UPDATE document_requests SET status = ? WHERE request_id = ?");
             $stmt->bind_param("si", $status, $req_id);
+            break;
+
+        case 'create_account':
+            $student_id = $_POST['student_id'];
+            $username = $_POST['username'];
+            $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            
+            // Link account to the student
+            $stmt = $conn->prepare("INSERT INTO student_accounts (student_id, username, password) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $student_id, $username, $password);
+            
+            if ($stmt->execute()) {
+                header("Location: " . $redirect . (strpos($redirect, '?') !== false ? '&' : '?') . "account_created=1");
+                exit();
+            } else {
+                echo "Error: " . $stmt->error;
+            }
             break;
 
         case 'assign_id':

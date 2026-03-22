@@ -149,8 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_profile'])) {
         .input-group input, .input-group select { padding: 0.8rem 1.1rem; border-radius:12px; border: 1.5px solid #e2e8f0; font-size: 0.95rem; }
         .input-group input:focus { outline:none; border-color: var(--s); box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
         
-        .btn-save { background: var(--p); color: white; border:none; padding: 1rem 2rem; border-radius:14px; font-weight:700; cursor:pointer; width:100%; font-size: 1.1rem; transition: all 0.3s; margin-top:1rem; box-shadow: 0 10px 20px rgba(23, 56, 138, 0.2); }
-        .btn-save:hover { background: var(--s); transform: translateY(-3px); }
+        .btn-save { background: var(--primary-color); color: white; border:none; padding: 1rem 2rem; border-radius:14px; font-weight:700; cursor:pointer; width:100%; font-size: 1.1rem; transition: all 0.3s; margin-top:1rem; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
+        .btn-save:hover { background: var(--primary-dark); transform: translateY(-3px); }
         .alert { background: #ecfdf5; border: 1px solid #10b981; color:#10b981; padding: 1.2rem; border-radius:14px; margin-bottom:2rem; font-weight:600; }
     </style>
 </head>

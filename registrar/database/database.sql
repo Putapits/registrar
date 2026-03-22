@@ -11,7 +11,20 @@ CREATE TABLE IF NOT EXISTS personal_info (
     address TEXT,
     program VARCHAR(50),
     section VARCHAR(10),
+    grade_level VARCHAR(20),
+    school_year VARCHAR(20),
     status VARCHAR(20) DEFAULT 'Active'
+);
+
+-- 1.1 Student Status History Table
+CREATE TABLE IF NOT EXISTS student_status_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id VARCHAR(20),
+    status VARCHAR(20),
+    school_year VARCHAR(20),
+    grade_level VARCHAR(20),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES personal_info(student_id) ON DELETE CASCADE
 );
 
 -- 2. Guardian & Emergency Contact Table
@@ -104,10 +117,10 @@ CREATE TABLE IF NOT EXISTS digital_storage (
 -- INSERT SAMPLE DATA --
 
 -- 1. Personal Info
-INSERT INTO personal_info (student_id, student_name, gender, dob, address, program, section, status) VALUES
-('2023-0001', 'Doe, John', 'Male', '2005-04-12', '123 Main St', 'Grade 11 STEM', 'A', 'Active'),
-('2023-0002', 'Smith, Jane', 'Female', '2006-08-22', '456 Oak Avenue', 'Grade 11 ABM', 'B', 'Active'),
-('2023-0003', 'Wilson, Mark', 'Male', '2004-11-05', '789 Pine Road', 'Grade 12 HUMSS', 'A', 'Inactive');
+INSERT INTO personal_info (student_id, student_name, gender, dob, address, program, section, grade_level, school_year, status) VALUES
+('2023-0001', 'Doe, John', 'Male', '2005-04-12', '123 Main St', 'Grade 11 STEM', 'A', '11', '2023-2024', 'Active'),
+('2023-0002', 'Smith, Jane', 'Female', '2006-08-22', '456 Oak Avenue', 'Grade 11 ABM', 'B', '11', '2023-2024', 'Active'),
+('2023-0003', 'Wilson, Mark', 'Male', '2004-11-05', '789 Pine Road', 'Grade 12 HUMSS', 'A', '12', '2022-2023', 'Inactive');
 
 -- 2. Contacts
 INSERT INTO student_contacts (student_id, guardian_name, relationship, contact_number, email, address) VALUES
